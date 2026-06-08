@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>README 预览</title>
+    <script src="marked.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: #f5f5f5;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 40px auto;
+            padding: 0 20px;
+        }
+
+        .status-bar {
+            background: #fff;
+            padding: 12px 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 14px;
+            color: #666;
+        }
+
+        .refresh-btn {
+            margin-left: auto;
+            padding: 6px 16px;
+            background: #0366d6;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 13px;
+            transition: background 0.2s;
+        }
+
+        .refresh-btn:hover {
+            background: #0256c7;
+        }
+
+        .refresh-btn:active {
+            background: #024494;
+        }
+
+        .refresh-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .status-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #ccc;
+            transition: background 0.3s;
+        }
+
+        .status-indicator.active {
+            background: #4caf50;
+        }
+
+        .status-indicator.loading {
+            background: #ff9800;
+            animation: pulse 1.5s infinite;
+        }
+
+        .status-indicator.error {
+            background: #f44336;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        .content {
+            background: #fff;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            min-height: 400px;
+        }
+
+        .content.loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #999;
+        }
+
+        .content.error {
+            text-align: center;
+            color: #666;
+        }
+
+        .content.error h2 {
+            color: #f44336;
+            margin-bottom: 10px;
+        }
+
+        /* Markdown 样式 */
+        .markdown-content h1 {
+            border-bottom: 2px solid #eee;
+            padding-bottom: 0.3em;
+            margin: 0 0 1em;
+            font-size: 2em;
+        }
+
+        .markdown-content h2 {
+            border-bottom: 1px solid #eee;
+            padding-bottom: 0.3em;
+            margin: 1.5em 0 0.8em;
+            font-size: 1.5em;
+        }
+
+        .markdown-content h3 {
+            margin: 1.5em 0 0.6em;
+            font-size: 1.25em;
+        }
+
+        .markdown-content p {
+            margin: 0 0 1em;
+            line-height: 1.8;
+        }
+
+        .markdown-content a {
+            color: #0366d6;
+            text-decoration: none;
+        }
+
+        .markdown-content a:hover {
+            text-decoration: underline;
+        }
+
+        .markdown-content code {
+            background: #f6f8fa;
+            padding: 0.2em 0.4em;
+            border-radius: 3px;
+            font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+            font-size: 0.9em;
+        }
+
+        .markdown-content pre {
+            background: #f6f8fa;
+            padding: 16px;
+            border-radius: 6px;
+            overflow: auto;
+            margin: 0 0 1em;
+        }
+
+        .markdown-content pre code {
+            background: none;
+            padding: 0;
+        }
+
+        .markdown-content ul, .markdown-content ol {
+            margin: 0 0 1em;
+            padding-left: 2em;
+        }
+
+        .markdown-content li {
+            margin: 0.25em 0;
+        }
+
+        .markdown-content blockquote {
+            border-left: 4px solid #ddd;
+            padding-left: 16px;
+            margin: 0 0 1em;
+            color: #666;
+        }
+
+        .markdown-content table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 0 0 1em;
+        }
+
+        .markdown-content th, .markdown-content td {
+            border: 1px solid #ddd;
+            padding: 8px 12px;
+            text-align: left;
+        }
+
+        .markdown-content th {
+            background: #f6f8fa;
+        }
+
+        .markdown-content img {
+            max-width: 100%;
+            height: auto;
+        }
+
+        .markdown-content hr {
+            border: none;
+            border-top: 1px solid #ddd;
+            margin: 2em 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="status-bar">
+            <div class="status-indicator" id="statusIndicator"></div>
+            <span id="statusText">正在加载 README.md...</span>
+            <button class="refresh-btn" id="refreshBtn" onclick="loadReadme()">刷新</button>
+        </div>
+        <div class="content loading" id="content">
+            加载中...
+        </div>
+    </div>
+
+    <script>
+        let lastContent = '';
+
+        async function loadReadme() {
+            try {
+                updateStatus('loading', '加载中...');
+                const response = await fetch('README.md');
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                const text = await response.text();
+                
+                // 检查内容是否变化
+                if (text === lastContent) {
+                    updateStatus('active', '已是最新');
+                    return;
+                }
+                lastContent = text;
+
+                // 渲染 Markdown
+                const html = marked.parse(text);
+                
+                const contentEl = document.getElementById('content');
+                contentEl.className = 'content markdown-content';
+                contentEl.innerHTML = html;
+
+                updateStatus('active', '加载完成');
+
+            } catch (error) {
+                console.error('加载失败:', error);
+                
+                const contentEl = document.getElementById('content');
+                contentEl.className = 'content error';
+                contentEl.innerHTML = `
+                    <h2>无法加载 README.md</h2>
+                    <p>请确保 README.md 文件与 README.html 在同一目录下</p>
+                    <p style="color: #999; font-size: 12px; margin-top: 20px;">${error.message}</p>
+                `;
+
+                updateStatus('error', '加载失败');
+            }
+        }
+
+        function updateStatus(type, text) {
+            const indicator = document.getElementById('statusIndicator');
+            const statusText = document.getElementById('statusText');
+            
+            indicator.className = 'status-indicator ' + type;
+            statusText.textContent = text;
+        }
+
+        // 初始加载
+        loadReadme();
+    </script>
+    <style>
+      .beian-bar{width:100%;background:#fff;padding:12px 0;text-align:center;font-size:14px;line-height:1.6;border-top:1px solid #eee}
+      .beian-pc{display:flex;justify-content:center;align-items:center;gap:20px}
+      .beian-disclaimer{color:#e74c3c;white-space:nowrap}
+      .beian-icp{color:#333;text-decoration:none;white-space:nowrap}
+      .beian-gongan{display:inline-flex;align-items:center;gap:6px;color:#333;text-decoration:none;white-space:nowrap}
+      .beian-gongan img{width:16px;height:16px}
+      @media(max-width:768px){.beian-pc{display:none}.beian-mobile{display:flex;flex-direction:column;align-items:center;gap:6px}.beian-mobile a,.beian-mobile span{display:block;line-height:1.8}}
+      @media(min-width:769px){.beian-mobile{display:none}}
+    </style>
+    <div class="beian-bar">
+      <div class="beian-pc">
+        <span class="beian-disclaimer">本站内容仅供学习和交流，非商业用途</span>
+        <a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener noreferrer" class="beian-icp">浙ICP备2025187466号</a>
+        <a href="https://www.beian.gov.cn/portal/registerSystemInfo?recordcode=33030402001483" target="_blank" rel="noopener noreferrer" class="beian-gongan">
+          <img src="https://www.937788.xyz/gonganbeian.png" alt="公安备案" onerror="this.style.display='none'">
+          浙公网安备33030402001483号
+        </a>
+      </div>
+      <div class="beian-mobile">
+        <span class="beian-disclaimer">本站内容仅供学习和交流，非商业用途</span>
+        <a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener noreferrer" class="beian-icp">浙ICP备2025187466号</a>
+        <a href="https://www.beian.gov.cn/portal/registerSystemInfo?recordcode=33030402001483" target="_blank" rel="noopener noreferrer" class="beian-gongan">
+          <img src="https://www.937788.xyz/gonganbeian.png" alt="公安备案" onerror="this.style.display='none'">
+          浙公网安备33030402001483号
+        </a>
+      </div>
+    </div>
+
+</body>
+</html>
