@@ -67,3 +67,7 @@ project/
 - 若文件不存在或加载失败，页面会显示错误提示
 - 支持标准 Markdown 语法（GitHub Flavored Markdown）
 - 建议将 `README.md` 作为项目的使用说明文档维护，内容更新后页面会自动同步
+
+## 截图
+
+![截图](截图.png)
